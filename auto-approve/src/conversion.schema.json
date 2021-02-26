@@ -40,7 +40,11 @@
 						}
 					}
 				}
-			}
+			},
+			"required": [
+				"change",
+				"environments"
+			]
 		},
 		"environment": {
 			"type": "object",
