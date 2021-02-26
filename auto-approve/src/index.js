@@ -1,8 +1,13 @@
+const githubActionsBot = 'github-actions[bot]';
+
+const Ajv = require( 'ajv' );
 const core = require( '@actions/core' );
 const github = require( '@actions/github' );
 const { readFile } = require( 'fs' ).promises;
 
-const githubActionsBot = 'github-actions[bot]';
+const ajv = new Ajv();
+const comparisonSchema = require( './conversion.schema.json' );
+const comparisonValidator = ajv.compile( comparisonSchema );
 
 function canAutoApprove( comparison, environments ) {
 
@@ -33,6 +38,12 @@ async function readComparison( path ) {
 	);
 
 	const comparison = JSON.parse( comparisonJson );
+
+	const valid = comparisonValidator( comparison );
+	if( !valid ) {
+		throw new Ajv.ValidationError( comparisonValidator.errors );
+	}
+
 	return comparison;
 }
 

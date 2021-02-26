@@ -368,3 +368,14 @@ test( 'non-approved chnage - multiple previous approvals', async () => {
 		message: 'Auto approval no longer applicable.'
 	} );
 } );
+
+test( 'invalid comparison', async () => {
+
+	const comparisonPath = await tempFiles.jsonFile( {
+		junk: true
+	} );
+
+	setupInputs( comparisonPath, 'test' );
+
+	await expect( runAction() ).rejects.toThrow( 'validation failed' );
+} );

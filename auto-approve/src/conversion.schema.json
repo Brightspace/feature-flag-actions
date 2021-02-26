@@ -1,0 +1,64 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"flags": {
+			"type": "object",
+			"additionalProperties": false,
+			"minProperties": 0,
+			"patternProperties": {
+				"^.+$": {
+					"$ref": "#/definitions/flag"
+				}
+			}
+		}
+	},
+	"required": [
+		"flags"
+	],
+	"definitions": {
+		"flag": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"change": {
+					"type": "string",
+					"enum": [
+						"create",
+						"update",
+						"delete"
+					]
+				},
+				"environments": {
+					"type": "object",
+					"additionalProperties": false,
+					"minProperties": 1,
+					"patternProperties": {
+						"^.+$": {
+							"$ref": "#/definitions/environment"
+						}
+					}
+				}
+			}
+		},
+		"environment": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"change": {
+					"type": "string",
+					"enum": [
+						"create",
+						"update",
+						"delete",
+						"none"
+					]
+				}
+			},
+			"required": [
+				"change"
+			]
+		}
+	}
+}
