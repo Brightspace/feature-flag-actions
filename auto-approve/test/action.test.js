@@ -290,7 +290,7 @@ test( 'non-approved chnage - single previous approval', async () => {
 	dismissRequest.done();
 
 	expect( dismissBody ).toEqual( {
-		message: 'Auto approval no longer applicable.'
+		message: 'Approval no longer applicable.'
 	} );
 } );
 
@@ -361,11 +361,11 @@ test( 'non-approved chnage - multiple previous approvals', async () => {
 	dismissRequest2.done();
 
 	expect( dismissBody1 ).toEqual( {
-		message: 'Auto approval no longer applicable.'
+		message: 'Approval no longer applicable.'
 	} );
 
 	expect( dismissBody2 ).toEqual( {
-		message: 'Auto approval no longer applicable.'
+		message: 'Approval no longer applicable.'
 	} );
 } );
 

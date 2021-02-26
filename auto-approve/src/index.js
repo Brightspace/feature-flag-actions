@@ -111,7 +111,7 @@ async function dismiss( octokit, pull_params ) {
 		const request = {
 			...pull_params,
 			review_id: id,
-			message: 'Auto approval no longer applicable.'
+			message: 'Approval no longer applicable.'
 		};
 
 		await octokit.pulls.dismissReview( request );
