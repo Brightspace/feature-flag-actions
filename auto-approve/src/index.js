@@ -1,6 +1,6 @@
 const githubActionsBot = 'github-actions[bot]';
 
-const Ajv = require( 'ajv' );
+const Ajv = require( 'ajv' ).default;
 const core = require( '@actions/core' );
 const github = require( '@actions/github' );
 const { readFile } = require( 'fs' ).promises;
