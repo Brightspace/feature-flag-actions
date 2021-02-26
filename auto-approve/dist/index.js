@@ -2,175 +2,7 @@ require('./sourcemap-register.js');module.exports =
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 932:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const core = __nccwpck_require__( 186 );
-const github = __nccwpck_require__( 438 );
-const { readFile } = __nccwpck_require__(747).promises;
-
-const githubActionsBot = 'github-actions[bot]';
-
-function canAutoApprove( comparison, environments ) {
-
-	for( const flag of Object.values( comparison.flags ) ) {
-		for( const [ envKey, env ] of Object.entries( flag.environments ) ) {
-
-			if( env.change === 'none' ) {
-				continue;
-			}
-
-			if( environments.has( envKey ) ) {
-				continue;
-			}
-
-			console.info( `Cannot auto approve with changes to the '${ envKey }' environment.` );
-			return false;
-		}
-	}
-
-	return true;
-}
-
-async function readComparison( path ) {
-
-	const comparisonJson = await readFile(
-		path,
-		{ encoding: 'utf8' }
-	);
-
-	const comparison = JSON.parse( comparisonJson );
-	return comparison;
-}
-
-function parseEnvironmentsSet( environments ) {
-
-	const environmentsSet = new Set();
-
-	for( const env of environments.split( ';' ) ) {
-		environmentsSet.add( env );
-	}
-
-	return environmentsSet;
-}
-
-async function approve( octokit, pull_params ) {
-
-	const request = {
-		...pull_params,
-		commit_id: github.context.sha,
-		event: 'APPROVE'
-	};
-
-	const response = await octokit.pulls.createReview( request );
-	const review = response.data;
-
-	const login = review.user.login;
-	if( login !== githubActionsBot ) {
-		throw new Error( `Should have approved pull request as '${ githubActionsBot }' instead of '${ login }'.` );
-	}
-
-	console.info( `Approved pull request. (id: ${ review.id })` );
-}
-
-async function* listApprovals( octokit, pull_params ) {
-
-	const responseIterator = octokit.paginate.iterator(
-		octokit.pulls.listReviews,
-		{ ...pull_params }
-	);
-
-	for await ( const response of responseIterator ) {
-		for( const review of response.data ) {
-
-			const login = review.user.login;
-			if( login !== githubActionsBot ) {
-				continue;
-			}
-
-			if( review.state === 'DISMISSED' ) {
-				continue;
-			}
-
-			yield review;
-		}
-	}
-}
-
-async function dismiss( octokit, pull_params ) {
-
-	const reviewsIterator = listApprovals( octokit, pull_params );
-	for await ( const review of reviewsIterator ) {
-
-		const id = review.id;
-
-		const request = {
-			...pull_params,
-			review_id: id,
-			message: 'Auto approval no longer applicable.'
-		};
-
-		await octokit.pulls.dismissReview( request );
-
-		console.info( `Dismissed approval. (id: ${ id })` );
-	}
-}
-
-async function run() {
-
-	const { pull_request } = github.context.payload;
-	if( !pull_request ) {
-		throw new Error( 'Context missing \'pull_request\'.' );
-	}
-
-	const repo = github.context.repo;
-
-	const pull_params = Object.freeze( {
-		owner: repo.owner,
-		repo: repo.repo,
-		pull_number: pull_request.number
-	} );
-
-	const comparisonPath = core.getInput(
-			'comparison-path',
-			{ required: true }
-		);
-
-	const environments = core.getInput(
-			'environments',
-			{ required: true }
-		);
-
-	const githubToken = core.getInput(
-			'github-token',
-			{ required: true }
-		);
-
-	const comparison = await readComparison( comparisonPath );
-	const environmentsSet = parseEnvironmentsSet( environments );
-
-	const octokit = github.getOctokit( githubToken );
-
-	const autoApprove = canAutoApprove( comparison, environmentsSet );
-	if( autoApprove ) {
-		await approve( octokit, pull_params );
-	} else {
-		await dismiss( octokit, pull_params );
-	}
-}
-
-if ( require.main === require.cache[eval('__filename')] ) {
-	run().catch( err => {
-		core.setFailed( err );
-	} );
-}
-
-module.exports = run;
-
-
-/***/ }),
-
-/***/ 351:
+/***/ 241:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -278,7 +110,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const command_1 = __nccwpck_require__(351);
+const command_1 = __nccwpck_require__(241);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(278);
 const os = __importStar(__nccwpck_require__(87));
@@ -3451,7 +3283,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var deprecation = __nccwpck_require__(481);
+var deprecation = __nccwpck_require__(932);
 var once = _interopDefault(__nccwpck_require__(223));
 
 const logOnce = once(deprecation => console.warn(deprecation));
@@ -3837,7 +3669,7 @@ function removeHook(state, name, method) {
 
 /***/ }),
 
-/***/ 481:
+/***/ 932:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -5963,6 +5795,174 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 351:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const core = __nccwpck_require__( 186 );
+const github = __nccwpck_require__( 438 );
+const { readFile } = __nccwpck_require__(747).promises;
+
+const githubActionsBot = 'github-actions[bot]';
+
+function canAutoApprove( comparison, environments ) {
+
+	for( const flag of Object.values( comparison.flags ) ) {
+		for( const [ envKey, env ] of Object.entries( flag.environments ) ) {
+
+			if( env.change === 'none' ) {
+				continue;
+			}
+
+			if( environments.has( envKey ) ) {
+				continue;
+			}
+
+			console.info( `Cannot auto approve with changes to the '${ envKey }' environment.` );
+			return false;
+		}
+	}
+
+	return true;
+}
+
+async function readComparison( path ) {
+
+	const comparisonJson = await readFile(
+		path,
+		{ encoding: 'utf8' }
+	);
+
+	const comparison = JSON.parse( comparisonJson );
+	return comparison;
+}
+
+function parseEnvironmentsSet( environments ) {
+
+	const environmentsSet = new Set();
+
+	for( const env of environments.split( ';' ) ) {
+		environmentsSet.add( env );
+	}
+
+	return environmentsSet;
+}
+
+async function approve( octokit, pull_params ) {
+
+	const request = {
+		...pull_params,
+		commit_id: github.context.sha,
+		event: 'APPROVE'
+	};
+
+	const response = await octokit.pulls.createReview( request );
+	const review = response.data;
+
+	const login = review.user.login;
+	if( login !== githubActionsBot ) {
+		throw new Error( `Should have approved pull request as '${ githubActionsBot }' instead of '${ login }'.` );
+	}
+
+	console.info( `Approved pull request. (id: ${ review.id })` );
+}
+
+async function* listApprovals( octokit, pull_params ) {
+
+	const responseIterator = octokit.paginate.iterator(
+		octokit.pulls.listReviews,
+		{ ...pull_params }
+	);
+
+	for await ( const response of responseIterator ) {
+		for( const review of response.data ) {
+
+			const login = review.user.login;
+			if( login !== githubActionsBot ) {
+				continue;
+			}
+
+			if( review.state === 'DISMISSED' ) {
+				continue;
+			}
+
+			yield review;
+		}
+	}
+}
+
+async function dismiss( octokit, pull_params ) {
+
+	const reviewsIterator = listApprovals( octokit, pull_params );
+	for await ( const review of reviewsIterator ) {
+
+		const id = review.id;
+
+		const request = {
+			...pull_params,
+			review_id: id,
+			message: 'Auto approval no longer applicable.'
+		};
+
+		await octokit.pulls.dismissReview( request );
+
+		console.info( `Dismissed approval. (id: ${ id })` );
+	}
+}
+
+async function run() {
+
+	const { pull_request } = github.context.payload;
+	if( !pull_request ) {
+		throw new Error( 'Context missing \'pull_request\'.' );
+	}
+
+	const repo = github.context.repo;
+
+	const pull_params = Object.freeze( {
+		owner: repo.owner,
+		repo: repo.repo,
+		pull_number: pull_request.number
+	} );
+
+	const comparisonPath = core.getInput(
+			'comparison-path',
+			{ required: true }
+		);
+
+	const environments = core.getInput(
+			'environments',
+			{ required: true }
+		);
+
+	const githubToken = core.getInput(
+			'github-token',
+			{ required: true }
+		);
+
+	const comparison = await readComparison( comparisonPath );
+	const environmentsSet = parseEnvironmentsSet( environments );
+
+	const octokit = github.getOctokit( githubToken );
+
+	const autoApprove = canAutoApprove( comparison, environmentsSet );
+	if( autoApprove ) {
+		await approve( octokit, pull_params );
+	} else {
+		await dismiss( octokit, pull_params );
+	}
+}
+
+if ( require.main === require.cache[eval('__filename')] ) {
+	run().catch( err => {
+		core.setFailed( err );
+	} );
+}
+
+module.exports = run;
+
+
+/***/ }),
+
 /***/ 877:
 /***/ ((module) => {
 
@@ -6113,7 +6113,7 @@ module.exports = require("zlib");;
 /******/ 	// module exports must be returned from runtime so entry inlining is disabled
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	return __nccwpck_require__(932);
+/******/ 	return __nccwpck_require__(351);
 /******/ })()
 ;
 //# sourceMappingURL=index.js.map

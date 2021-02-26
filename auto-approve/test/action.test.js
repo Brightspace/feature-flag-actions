@@ -54,7 +54,7 @@ function setupInputs( comparisonPath, environments ) {
 async function runAction() {
 
 	// @actions/github parses process.env so this needs to be done late
-	const action = require( '..' );
+	const action = require( '../src' );
 	await action();
 }
 
@@ -173,5 +173,198 @@ test( 'approved environmental chnage', async () => {
 	expect( approveBody ).toEqual( {
 		commit_id: commitId,
 		event: 'APPROVE',
+	} );
+} );
+
+test( 'non-approved chnage - no previous approval', async () => {
+
+	const comparisonPath = await tempFiles.jsonFile( {
+		flags: {
+			foo: {
+				change: 'update',
+				environments: {
+					test: { change: 'none' },
+					prod: { change: 'update' }
+				}
+			}
+		}
+	} );
+
+	setupInputs( comparisonPath, 'test' );
+
+	const listRequest = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.get( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews` )
+		.reply( 200, [] );
+
+	await expect( runAction() ).resolves.toEqual( undefined );
+
+	listRequest.done();
+} );
+
+test( 'non-approved chnage - unrelated approval', async () => {
+
+	const comparisonPath = await tempFiles.jsonFile( {
+		flags: {
+			foo: {
+				change: 'update',
+				environments: {
+					test: { change: 'none' },
+					prod: { change: 'update' }
+				}
+			}
+		}
+	} );
+
+	setupInputs( comparisonPath, 'test' );
+
+	const listRequest = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.get( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews` )
+		.reply( 200, [
+			{
+				id: 75,
+				user: { login: 'johndoe' }
+			}
+		] );
+
+	await expect( runAction() ).resolves.toEqual( undefined );
+
+	listRequest.done();
+} );
+
+test( 'non-approved chnage - single previous approval', async () => {
+
+	const comparisonPath = await tempFiles.jsonFile( {
+		flags: {
+			foo: {
+				change: 'update',
+				environments: {
+					test: { change: 'none' },
+					prod: { change: 'update' }
+				}
+			}
+		}
+	} );
+
+	setupInputs( comparisonPath, 'test' );
+
+	const listRequest = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.get( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews` )
+		.reply( 200, [
+			{
+				id: 75,
+				user: { login: githubActionsBot }
+			}
+		] );
+
+	let dismissBody = null;
+	const dismissRequest = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.put( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/75/dismissals`, body => {
+			dismissBody = body;
+			return true;
+		} )
+		.reply( 200 );
+
+	await expect( runAction() ).resolves.toEqual( undefined );
+
+	listRequest.done();
+	dismissRequest.done();
+
+	expect( dismissBody ).toEqual( {
+		message: 'Auto approval no longer applicable.'
+	} );
+} );
+
+test( 'non-approved chnage - multiple previous approvals', async () => {
+
+	const comparisonPath = await tempFiles.jsonFile( {
+		flags: {
+			foo: {
+				change: 'update',
+				environments: {
+					test: { change: 'none' },
+					prod: { change: 'update' }
+				}
+			}
+		}
+	} );
+
+	setupInputs( comparisonPath, 'test' );
+
+	const listRequest = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.get( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews` )
+		.reply( 200, [
+			{
+				id: 75,
+				user: { login: githubActionsBot }
+			},
+			{
+				id: 85,
+				user: { login: githubActionsBot }
+			}
+		] );
+
+	let dismissBody1 = null;
+	const dismissRequest1 = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.put( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/75/dismissals`, body => {
+			dismissBody1 = body;
+			return true;
+		} )
+		.reply( 200 );
+
+	let dismissBody2 = null;
+	const dismissRequest2 = nock( githubEndpoint, {
+			...nockOptions,
+			reqheaders: {
+				'Authorization': `token ${token}`
+			}
+		} )
+		.put( `/repos/${owner}/${repo}/pulls/${pullNumber}/reviews/85/dismissals`, body => {
+			dismissBody2 = body;
+			return true;
+		} )
+		.reply( 200 );
+
+	await expect( runAction() ).resolves.toEqual( undefined );
+
+	listRequest.done();
+	dismissRequest1.done();
+	dismissRequest2.done();
+
+	expect( dismissBody1 ).toEqual( {
+		message: 'Auto approval no longer applicable.'
+	} );
+
+	expect( dismissBody2 ).toEqual( {
+		message: 'Auto approval no longer applicable.'
 	} );
 } );
