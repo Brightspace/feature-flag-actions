@@ -1,0 +1,24 @@
+name: Feature Flags - Auto Approve
+description: Auto approves a featre flag pull request.
+
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+
+  comparison-path:
+    description: The path to the feature flag definitions comparison summary json file.
+    required: true
+
+  environments:
+    description: The feature flag environments which can be auto approved.
+    required: true
+
+  github-token:
+    description: The GitHub api token.
+    required: true
+
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
