@@ -7,7 +7,7 @@ const tempFiles = [];
 async function jsonFile( content ) {
 
 	const json = JSON.stringify( content, null, '\t' );
-	const path = joinPath( __dirname, `../tmp/${uuidv4()}.json` );
+	const path = joinPath( __dirname, `tmp/${uuidv4()}.json` );
 	await writeFile( path, json, { encoding: 'utf8' } );
 	tempFiles.push( path );
 	return path;

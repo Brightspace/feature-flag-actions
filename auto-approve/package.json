@@ -3,6 +3,7 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
+    "coverage": "jest --coverage",
     "lint": "eslint .",
     "prepare": "ncc build src/index.js -o dist --source-map --license licenses.txt",
     "test": "jest",
