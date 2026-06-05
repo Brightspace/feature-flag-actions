@@ -16,7 +16,7 @@ jobs:
 
       - uses: Brightspace/setup-node@main
         with:
-          node-version: 12
+          node-version: 24
 
       - name: auto-approve
         run: npm install && npm run all
