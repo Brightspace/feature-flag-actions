@@ -16,7 +16,7 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
-    "ajv": "^7.1.1"
+    "ajv": "^8.18.0"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.38.3",
